@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Movie Recommender</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to bottom, #2196F3, #64B5F6, #90CAF9);
+      /* Default: title mode */
+      color: #000;
+      padding: 20px;
+      max-width: 900px;
+      margin: auto;
+      min-height: 100vh;
+      transition: background 0.6s ease;
+    }
+
+    /* Smart Search background: soft yellow to white */
+    body.smart-mode {
+      background: linear-gradient(to bottom, #cdcd78, #ffffff, #dece9c);
+      color: #000;
+    }
+
+    h1 {
+      text-align: center;
+      color: #ffffff;
+      text-shadow: 0 0 10px #2196f3aa;
+    }
+
+    h2 {
+      border-bottom: 2px solid #2196F3;
+      padding-bottom: 5px;
+      margin-top: 30px;
+      color: #1449ac;
+    }
+
+    .search-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      justify-content: center;
+    }
+
+    .mode-toggle {
+      display: flex;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1px solid #bbb;
+      background: #f0f0f0;
+    }
+
+    .mode-toggle button {
+      padding: 8px 14px;
+      border: none;
+      background: transparent;
+      color: #333;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .mode-toggle button.active {
+      background: #2196F3;
+      color: #fff;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      min-width: 200px;
+      padding: 10px;
+      font-size: 1em;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      background: #fff;
+      color: #000;
+    }
+
+    button {
+      padding: 10px 15px;
+      font-size: 1em;
+      background: #2196F3;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      background: #1976D2;
+      box-shadow: 0 0 10px #2196f3aa;
+      transform: scale(1.05);
+    }
+
+    .info-text {
+      font-size: 0.9em;
+      color: #333;
+      text-align: center;
+      margin-top: -5px;
+      margin-bottom: 15px;
+    }
+
+    .movie {
+      background: #ffffff;
+      margin: 10px 0;
+      padding: 15px;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .movie:hover {
+      transform: scale(1.02);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    input[type="range"] {
+      width: 150px;
+      margin-top: 10px;
+      cursor: pointer;
+      accent-color: #2196F3;
+    }
+
+    .movie button {
+      float: right;
+      margin-top: 5px;
+      background-color: #FFB300;
+      color: #000;
+    }
+
+    .movie button:hover {
+      background-color: #FFA000;
+      box-shadow: 0 0 10px #ffc107aa;
+    }
+
+    @media (max-width: 600px) {
+      .search-bar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .movie button {
+        float: none;
+        width: 100%;
+        margin-top: 10px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <h1>🎬 Movie Recommender</h1>
+
+  <div class="search-bar">
+    <div class="mode-toggle">
+      <button id="titleMode" class="active" onclick="setSearchMode('title')">🔤 Title Search</button>
+      <button id="smartMode" onclick="setSearchMode('smart')">🧠 Smart Search</button>
+    </div>
+    <input type="text" id="searchInput" placeholder="Type movie title or describe a scene..." />
+    <button onclick="searchMovies()">Search</button>
+  </div>
+
+  <div class="info-text">
+    <span id="searchModeInfo">Search by movie title</span>
+  </div>
+
+  <h2>🔍 Search Results</h2>
+  <div id="searchResults"></div>
+
+  <h2>🎯 Your Recommendations</h2>
+  <div id="recommendations"></div>
+  
+  <script>
+  const API_BASE = "${{ API_URL }}"; // placeholder to be replaced by GitHub Action
+  </script>
+  
+  <script>
+    let currentMode = "title";
+
+    function setSearchMode(mode) {
+      currentMode = mode;
+      document.getElementById("titleMode").classList.remove("active");
+      document.getElementById("smartMode").classList.remove("active");
+      document.getElementById(`${mode}Mode`).classList.add("active");
+
+      document.getElementById("searchModeInfo").innerText =
+        mode === "title"
+          ? "Search by movie title"
+          : "Describe a scene, event, or character to search";
+
+      // Change body background based on mode
+      if (mode === "smart") {
+        document.body.classList.add("smart-mode");
+      } else {
+        document.body.classList.remove("smart-mode");
+      }
+    }
+
+    function getLikedMovies() {
+      return JSON.parse(localStorage.getItem("likedMovies") || "{}");
+    }
+
+    function rateMovie(imdbId, title) {
+      const ratingInput = document.getElementById(`rating-${imdbId}`);
+      if (!ratingInput) return;
+
+      const rating = parseFloat(ratingInput.value).toFixed(1);
+      const liked = getLikedMovies();
+      liked[imdbId] = parseFloat(rating);
+      localStorage.setItem("likedMovies", JSON.stringify(liked));
+      alert(`Rated ${title}: ⭐ ${rating}`);
+      loadRecommendations();
+    }
+
+    function searchMovies() {
+      const query = document.getElementById("searchInput").value;
+      const endpoint = currentMode === "smart" ? "smartsearch" : "search";
+
+      fetch(`${API_BASE}/${endpoint}`, {
+        method: "POST",
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query })
+      })
+        .then(res => res.json())
+        .then(data => {
+          const container = document.getElementById("searchResults");
+          container.innerHTML = "";
+          data.forEach(movie => {
+            const safeTitle = movie.title.replace(/'/g, "\\'");
+            container.innerHTML += `
+              <div class="movie">
+                <strong>${movie.title}</strong><br>
+                Rating:
+                <input type="range" id="rating-${movie.imdbId}" min="0.5" max="5" step="0.1" value="5"
+                       oninput="document.getElementById('value-${movie.imdbId}').innerText = this.value">
+                <span id="value-${movie.imdbId}">5.0</span>
+                <button onclick="rateMovie(${movie.imdbId}, '${safeTitle}')">⭐ Rate</button>
+              </div>`;
+          });
+        });
+    }
+
+    function loadRecommendations() {
+      const liked = getLikedMovies();
+      const container = document.getElementById("recommendations");
+      container.innerHTML = "Loading...";
+
+      if (Object.keys(liked).length === 0) {
+        container.innerHTML = "<i>No liked movies yet. Rate some to get recommendations.</i>";
+        return;
+      }
+
+      fetch(`${API_BASE}/recommend`, {
+        method: "POST",
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ratings: liked })
+      })
+        .then(res => res.json())
+        .then(data => {
+          container.innerHTML = "";
+          data.forEach(movie => {
+            container.innerHTML += `<div class="movie">${movie.title}</div>`;
+          });
+        });
+    }
+
+    window.onload = loadRecommendations;
+  </script>
+</body>
+
+
+</html>
+
