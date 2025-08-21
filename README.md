@@ -33,9 +33,11 @@ A movie recommendation system combining **Collaborative Filtering** and **AI-pow
 - Python 3.8+
 - Node or any HTTP server to serve `index.html` (optional, can open directly in browser)
 - Required Python packages:
-  ```bash
+
+
+```bash
   pip install flask flask-cors numpy pandas scipy scikit-learn sentence-transformers
-````
+```
 
 ### Running the Backend
 
@@ -66,5 +68,6 @@ Open `index.html` in your browser. Ensure backend is running on `localhost:5000`
 * Vanilla JavaScript, HTML, CSS
 
 ---
+
 
 😊 THANK YOU 😊
