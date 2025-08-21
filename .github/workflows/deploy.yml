@@ -1,0 +1,32 @@
+name: Deploy to GitHub Pages with API URL
+
+on:
+  push:
+    branches:
+      - main  # or your default branch
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Replace API_URL placeholder in template
+        run: |
+          sed "s|\${{ API_URL }}|${{ secrets.API_URL }}|g" index.template.html > index.html
+
+      - name: Commit and push updated index.html
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add index.html
+          git commit -m "Update index.html with API_URL from secret" || echo "No changes to commit"
+          git push
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./ # Publish root directory where index.html is
